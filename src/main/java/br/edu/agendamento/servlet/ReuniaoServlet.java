@@ -165,7 +165,7 @@ public class ReuniaoServlet extends HttpServlet {
                 }
             }
 
-            service.criar(reuniao, emails);
+            service.criar(reuniao, emails, montarUrlBase(request));
             response.sendRedirect(request.getContextPath() + "/reunioes");
         } catch (IllegalArgumentException exception) {
             request.setAttribute("erro", exception.getMessage());
@@ -188,6 +188,19 @@ public class ReuniaoServlet extends HttpServlet {
             }
         }
         return emails;
+    }
+
+    private String montarUrlBase(HttpServletRequest request) {
+        StringBuilder url = new StringBuilder(request.getScheme())
+                .append("://")
+                .append(request.getServerName());
+        int porta = request.getServerPort();
+        if (!("http".equalsIgnoreCase(request.getScheme()) && porta == 80)
+                && !("https".equalsIgnoreCase(request.getScheme()) && porta == 443)) {
+            url.append(':').append(porta);
+        }
+        url.append(request.getContextPath());
+        return url.toString();
     }
 
     private void encaminharErro(HttpServletRequest request, HttpServletResponse response,

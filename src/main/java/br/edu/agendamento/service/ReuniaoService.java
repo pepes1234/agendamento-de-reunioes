@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import br.edu.agendamento.config.Environment;
 import br.edu.agendamento.model.Horario;
@@ -22,6 +24,11 @@ public class ReuniaoService {
     private final MailService mailService = new MailService();
 
     public Reuniao criar(Reuniao dados, List<String> emails) throws SQLException {
+        return criar(dados, emails,
+                Environment.get("APP_BASE_URL", "http://localhost:8080"));
+    }
+
+    public Reuniao criar(Reuniao dados, List<String> emails, String appBaseUrl) throws SQLException {
         validar(dados, emails);
         dados.setTokenPublico(UUID.randomUUID().toString());
         dados.setTokenAdmin(UUID.randomUUID().toString());
@@ -36,8 +43,15 @@ public class ReuniaoService {
             Participante participante = participanteRepository.inserir(
                     reuniao.getId(), null, normalizado, false);
             String assunto = "Disponibilidade: " + reuniao.getTitulo();
-            String link = Environment.get("APP_BASE_URL", "http://localhost:8080")
-                    + "/resposta?token=" + participante.getToken();
+            String baseUrl = appBaseUrl == null ? "" : appBaseUrl.trim();
+            if (baseUrl.isBlank()) {
+                baseUrl = Environment.get("APP_BASE_URL", "http://localhost:8080");
+            }
+            while (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+            String token = URLEncoder.encode(participante.getToken(), StandardCharsets.UTF_8);
+            String link = baseUrl + "/resposta?token=" + token;
             try {
                 mailService.enviar(normalizado, assunto,
                         "Voce foi convidado para a reuniao \"" + reuniao.getTitulo() + "\".\n\n"
