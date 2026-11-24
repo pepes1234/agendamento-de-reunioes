@@ -30,9 +30,6 @@ public class ResumoHorario {
     public void setDisponivel(int disponivel) { this.disponivel = disponivel; }
     public int getTalvez() { return talvez; }
     public void setTalvez(int talvez) { this.talvez = talvez; }
-    public int getTotalRespondido() {
-        return disponivel + talvez;
-    }
     public List<ParticipanteResposta> getDisponiveisPorNome() { return disponiveisPorNome; }
     public List<ParticipanteResposta> getTalvezPorNome() { return talvezPorNome; }
 }

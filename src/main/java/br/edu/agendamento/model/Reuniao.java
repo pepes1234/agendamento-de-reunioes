@@ -19,7 +19,6 @@ public class Reuniao {
     private LocalTime horaInicio;
     private LocalTime horaFim;
     private Integer duracaoMinutos;
-    private LocalDate criadaEm;
 
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
@@ -49,9 +48,6 @@ public class Reuniao {
     public void setHoraFim(LocalTime horaFim) { this.horaFim = horaFim; }
     public Integer getDuracaoMinutos() { return duracaoMinutos; }
     public void setDuracaoMinutos(Integer duracaoMinutos) { this.duracaoMinutos = duracaoMinutos; }
-    public LocalDate getCriadaEm() { return criadaEm; }
-    public void setCriadaEm(LocalDate criadaEm) { this.criadaEm = criadaEm; }
-
     public String getPeriodoFormatado() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         if (dataInicio.equals(dataFim)) {

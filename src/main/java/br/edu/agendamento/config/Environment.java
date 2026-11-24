@@ -29,26 +29,11 @@ public final class Environment {
         return value.isBlank() ? defaultValue : value;
     }
 
-    public static int getInt(String name, int defaultValue) {
-        try {
-            return Integer.parseInt(get(name));
-        } catch (NumberFormatException exception) {
-            return defaultValue;
-        }
-    }
-
-    public static boolean getBoolean(String name, boolean defaultValue) {
-        String value = get(name);
-        if (value.isBlank()) {
-            return defaultValue;
-        }
-        return "true".equalsIgnoreCase(value) || "1".equals(value);
-    }
-
     private static Map<String, String> loadDotEnv() {
         Map<String, String> values = new HashMap<>();
 
         Path currentDirectory = Paths.get("").toAbsolutePath();
+        System.out.println("diretorio de trabalho: " + currentDirectory);
         Path envFile = currentDirectory.resolve(".env");
         if (!Files.isRegularFile(envFile)) {
             envFile = currentDirectory.resolve("..").resolve(".env").normalize();
