@@ -16,7 +16,7 @@ public final class DatabaseConnection {
         }
         return DriverManager.getConnection(
                 Environment.get("DB_URL",
-                        "jdbc:mysql://localhost:3306/agendamento_reunioes?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"),
+                        "jdbc:mysql://localhost:3306/sistema_reunioes?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"),
                 Environment.get("DB_USER"),
                 Environment.get("DB_PASSWORD"));
     }

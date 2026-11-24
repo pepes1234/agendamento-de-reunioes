@@ -1,12 +1,13 @@
-CREATE DATABASE IF NOT EXISTS agendamento_reunioes
+CREATE DATABASE IF NOT EXISTS sistema_reunioes
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
-USE agendamento_reunioes;
+USE sistema_reunioes;
 
 CREATE TABLE IF NOT EXISTS reuniao (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     nome VARCHAR(150) NOT NULL,
+    criador_email VARCHAR(254) NULL,
     data_inicio DATE NOT NULL,
     data_fim DATE NOT NULL,
     formato ENUM('HORA', 'TURNO') NOT NULL,
@@ -21,6 +22,10 @@ CREATE TABLE IF NOT EXISTS reuniao (
     KEY idx_reuniao_datas (data_inicio, data_fim),
     CONSTRAINT ck_reuniao_periodo CHECK (data_fim >= data_inicio)
 ) ENGINE=InnoDB;
+
+ALTER TABLE reuniao
+    ADD COLUMN IF NOT EXISTS criador_email VARCHAR(254) NULL AFTER nome,
+    ADD INDEX IF NOT EXISTS idx_reuniao_criador_email (criador_email);
 
 CREATE TABLE IF NOT EXISTS opcao_agendamento (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

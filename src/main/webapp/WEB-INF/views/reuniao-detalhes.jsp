@@ -5,131 +5,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="data:,">
     <title>Detalhes da reuniao</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
 <main class="container py-4">
     <a class="btn btn-link px-0" href="<c:url value='/reunioes'/>">&larr; Voltar</a>
-    <h1 class="h2 mb-2"><c:out value="${reuniao.nome}"/></h1>
+    <h1 class="h2 mb-2"><c:out value="${reuniao.titulo}"/></h1>
     <p><strong>Periodo:</strong> <c:out value="${reuniao.periodoFormatado}"/></p>
+    <c:if test="${not empty reuniao.descricao}">
+        <p><strong>Descricao:</strong> <c:out value="${reuniao.descricao}"/></p>
+    </c:if>
+    <c:if test="${not empty reuniao.localReuniao}">
+        <p><strong>Local:</strong> <c:out value="${reuniao.localReuniao}"/></p>
+    </c:if>
 
-    <h2 class="h4 mt-4">Opcoes</h2>
-    <c:choose>
-        <c:when test="${empty opcoes}">
-            <div class="alert alert-light border">Nenhuma opcao gerada.</div>
-        </c:when>
-        <c:otherwise>
-            <ul class="list-group mb-4">
-                <c:forEach var="opcao" items="${opcoes}">
-                    <li class="list-group-item">
-                        <c:out value="${opcao.dataOpcao}"/>
-                        <c:if test="${not empty opcao.turno}">
-                            - <c:out value="${opcao.turno}"/>
-                        </c:if>
-                        <c:if test="${not empty opcao.horaInicio}">
-                            - <c:out value="${opcao.horaInicio}"/> a
-                            <c:out value="${opcao.horaFim}"/>
-                        </c:if>
-                    </li>
-                </c:forEach>
-            </ul>
-        </c:otherwise>
-    </c:choose>
+    <h2 class="h4 mt-4">Horarios</h2>
+    <ul class="list-group mb-4">
+        <c:forEach var="horario" items="${horarios}">
+            <li class="list-group-item">
+                <c:out value="${horario.dia}"/>
+                <c:if test="${not empty horario.periodo}"> - <c:out value="${horario.periodo}"/></c:if>
+                <c:if test="${not empty horario.horaInicio}">
+                    - <c:out value="${horario.horaInicio}"/> a <c:out value="${horario.horaFim}"/>
+                </c:if>
+            </li>
+        </c:forEach>
+    </ul>
 
-    <h2 class="h4 mt-4">Resumo dos horarios registrados</h2>
-    <c:choose>
-        <c:when test="${empty resumoOpcoes}">
-            <div class="alert alert-light border">Nenhuma opcao disponivel para resumo.</div>
-        </c:when>
-        <c:otherwise>
-            <div class="table-responsive mb-4">
-                <table class="table table-bordered align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Horario</th>
-                            <th class="text-success">Disponivel</th>
-                            <th class="text-warning">Talvez</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <c:forEach var="item" items="${resumoOpcoes}">
-                            <tr>
-                                <td>
-                                    <c:out value="${item.dataOpcao}"/>
-                                    <c:if test="${not empty item.turno}">
-                                        - <c:out value="${item.turno}"/>
-                                    </c:if>
-                                    <c:if test="${not empty item.horaInicio}">
-                                        - <c:out value="${item.horaInicio}"/> a
-                                        <c:out value="${item.horaFim}"/>
-                                    </c:if>
-                                </td>
-                                <td>
-                                    <span class="badge text-bg-success"><c:out value="${item.disponivel}"/></span>
-                                    <c:if test="${not empty item.disponiveisPorNome}">
-                                        <div class="small mt-1">
-                                            <c:forEach var="participante" items="${item.disponiveisPorNome}" varStatus="status">
-                                                <c:out value="${participante.nome}"/><c:if test="${!status.last}">, </c:if>
-                                            </c:forEach>
-                                        </div>
-                                    </c:if>
-                                </td>
-                                <td>
-                                    <span class="badge text-bg-warning"><c:out value="${item.talvez}"/></span>
-                                    <c:if test="${not empty item.talvezPorNome}">
-                                        <div class="small mt-1">
-                                            <c:forEach var="participante" items="${item.talvezPorNome}" varStatus="status">
-                                                <c:out value="${participante.nome}"/><c:if test="${!status.last}">, </c:if>
-                                            </c:forEach>
-                                        </div>
-                                    </c:if>
-                                </td>
-                            </tr>
-                        </c:forEach>
-                    </tbody>
-                </table>
-            </div>
-        </c:otherwise>
-    </c:choose>
+    <h2 class="h4 mt-4">Resumo dos horarios</h2>
+    <div class="table-responsive mb-4">
+        <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>Horario</th><th>Sim</th><th>Talvez</th></tr></thead>
+            <tbody>
+            <c:forEach var="item" items="${resumoHorarios}">
+                <tr>
+                    <td><c:out value="${item.dia}"/>
+                        <c:if test="${not empty item.periodo}"> - <c:out value="${item.periodo}"/></c:if>
+                        <c:if test="${not empty item.horaInicio}"> - <c:out value="${item.horaInicio}"/> a <c:out value="${item.horaFim}"/></c:if>
+                    </td>
+                    <td><span class="badge text-bg-success"><c:out value="${item.disponivel}"/></span></td>
+                    <td><span class="badge text-bg-warning"><c:out value="${item.talvez}"/></span></td>
+                </tr>
+            </c:forEach>
+            </tbody>
+        </table>
+    </div>
 
-    <h2 class="h4 mt-4">Convidados e respostas</h2>
-    <c:choose>
-        <c:when test="${empty convidados}">
-            <div class="alert alert-light border">Nenhum convidado.</div>
-        </c:when>
-        <c:otherwise>
-            <div class="table-responsive">
-            <table class="table table-striped table-bordered align-middle">
-                <thead class="table-light">
-                    <tr><th>E-mail</th><th>Resposta</th><th>Opcoes marcadas</th></tr>
-                </thead>
-                <tbody>
-                    <c:forEach var="convidado" items="${convidados}">
-                        <tr>
-                            <td>
-                                <c:out value="${convidado.email}"/>
-                            </td>
-                            <td>
-                                <c:out value="${convidado.confirmado ? 'Respondido' : 'Pendente'}"/>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center justify-content-end gap-2">
-                                    <span><c:out value="${convidado.quantidadeDisponibilidades}"/></span>
-                                    <a class="btn btn-sm btn-outline-primary"
-                                       href="<c:url value='/resposta'><c:param name='token' value='${convidado.tokenResposta}'/><c:param name='readonly' value='1'/></c:url>">
-                                        Ver resposta
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    </c:forEach>
-                </tbody>
-            </table>
-            </div>
-        </c:otherwise>
-    </c:choose>
+    <h2 class="h4 mt-4">Participantes</h2>
+    <table class="table table-striped table-bordered">
+        <thead class="table-light"><tr><th>Nome</th><th>E-mail</th><th>Resposta</th><th>Opcoes marcadas</th></tr></thead>
+        <tbody>
+        <c:forEach var="participante" items="${participantes}">
+            <tr>
+                <td><c:out value="${empty participante.nome ? participante.email : participante.nome}"/></td>
+                <td><c:out value="${participante.email}"/></td>
+                <td><c:out value="${participante.respondidoEm == null ? 'Pendente' : 'Respondido'}"/></td>
+                <td>
+                    <span><c:out value="${participante.quantidadeDisponibilidades}"/></span>
+                    <a class="btn btn-sm btn-outline-primary"
+                       href="<c:url value='/resposta'><c:param name='token' value='${participante.token}'/><c:param name='readonly' value='1'/></c:url>">Ver resposta</a>
+                </td>
+            </tr>
+        </c:forEach>
+        </tbody>
+    </table>
 </main>
 </body>
 </html>

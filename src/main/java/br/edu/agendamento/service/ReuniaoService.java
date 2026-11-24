@@ -5,145 +5,159 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import br.edu.agendamento.config.Environment;
-import br.edu.agendamento.model.Convidado;
-import br.edu.agendamento.model.OpcaoAgendamento;
+import br.edu.agendamento.model.Horario;
+import br.edu.agendamento.model.Participante;
 import br.edu.agendamento.model.Reuniao;
-import br.edu.agendamento.repository.ConvidadoRepository;
+import br.edu.agendamento.model.ResumoHorario;
+import br.edu.agendamento.repository.ParticipanteRepository;
 import br.edu.agendamento.repository.ReuniaoRepository;
 
 public class ReuniaoService {
     private final ReuniaoRepository reuniaoRepository = new ReuniaoRepository();
-    private final ConvidadoRepository convidadoRepository = new ConvidadoRepository();
+    private final ParticipanteRepository participanteRepository = new ParticipanteRepository();
     private final MailService mailService = new MailService();
 
     public Reuniao criar(Reuniao dados, List<String> emails) throws SQLException {
         validar(dados, emails);
-        dados.setTokenExclusao(UUID.randomUUID().toString());
+        dados.setTokenPublico(UUID.randomUUID().toString());
+        dados.setTokenAdmin(UUID.randomUUID().toString());
         Reuniao reuniao = reuniaoRepository.inserir(dados);
-        reuniaoRepository.inserirOpcoes(reuniao.getId(), gerarOpcoes(reuniao));
+        reuniaoRepository.inserirHorarios(reuniao.getId(), gerarHorarios(reuniao));
 
+        participanteRepository.inserir(reuniao.getId(), reuniao.getNomeProponente(),
+                reuniao.getEmailProponente().trim().toLowerCase(), true);
         for (String email : emails) {
             String normalizado = email.trim().toLowerCase();
-            Convidado convidado = convidadoRepository.inserir(reuniao.getId(), normalizado);
-            String assunto = "Disponibilidade: " + reuniao.getNome();
-            String link = Environment.get("APP_BASE_URL",
-                    "http://localhost:8080")
-                    + "/resposta?token=" + convidado.getTokenResposta();
-
+            if (normalizado.equalsIgnoreCase(reuniao.getEmailProponente())) continue;
+            Participante participante = participanteRepository.inserir(
+                    reuniao.getId(), null, normalizado, false);
+            String assunto = "Disponibilidade: " + reuniao.getTitulo();
+            String link = Environment.get("APP_BASE_URL", "http://localhost:8080")
+                    + "/resposta?token=" + participante.getToken();
             try {
                 mailService.enviar(normalizado, assunto,
-                        "Voce foi convidado para a reuniao \"" + reuniao.getNome() + "\".\n\n"
+                        "Voce foi convidado para a reuniao \"" + reuniao.getTitulo() + "\".\n\n"
                                 + "Informe sua disponibilidade neste link:\n" + link);
-                convidadoRepository.registrarNotificacao(
-                        convidado.getId(), assunto, "ENVIADO", null);
-            } catch (Exception exception) {
-                convidadoRepository.registrarNotificacao(
-                        convidado.getId(), assunto, "FALHA", exception.getMessage());
+                participanteRepository.registrarEmailEnviado(participante.getId());
+            } catch (Exception ignored) {
             }
         }
         return reuniao;
-    }
-
-    public List<Reuniao> listar() throws SQLException {
-        return reuniaoRepository.listarTodas();
     }
 
     public Reuniao buscar(long id) throws SQLException {
         return reuniaoRepository.buscarPorId(id);
     }
 
-    public Reuniao buscarPorTokenExclusao(String token) throws SQLException {
-        return reuniaoRepository.buscarPorTokenExclusao(token);
+    public Reuniao buscarPorTokenAdmin(String token) throws SQLException {
+        return reuniaoRepository.buscarPorTokenAdmin(token);
+    }
+
+    public Reuniao buscarPorTokenPublico(String token) throws SQLException {
+        return reuniaoRepository.buscarPorTokenPublico(token);
     }
 
     public void excluir(long id) throws SQLException {
         reuniaoRepository.excluir(id);
     }
 
-    public List<OpcaoAgendamento> listarOpcoes(long reuniaoId) throws SQLException {
-        return reuniaoRepository.listarOpcoes(reuniaoId);
+    public List<Reuniao> listarCriadasPor(String email) throws SQLException {
+        return reuniaoRepository.listarCriadasPor(email);
     }
 
-    public Convidado buscarConvidadoPorToken(String token) throws SQLException {
-        return convidadoRepository.buscarPorToken(token);
+    public List<Reuniao> listarParticipadasPor(String email) throws SQLException {
+        return reuniaoRepository.listarParticipadasPor(email);
     }
 
-    public List<Convidado> listarConvidados(long reuniaoId) throws SQLException {
-        return convidadoRepository.listarPorReuniao(reuniaoId);
+    public List<Horario> listarHorarios(long reuniaoId) throws SQLException {
+        return reuniaoRepository.listarHorarios(reuniaoId);
     }
 
-    public void salvarResposta(long convidadoId, java.util.Map<Long, String> respostas)
-            throws SQLException {
-        convidadoRepository.salvarResposta(convidadoId, respostas);
+    public Participante buscarParticipantePorToken(String token) throws SQLException {
+        return participanteRepository.buscarPorToken(token);
     }
 
-    public java.util.Map<Long, String> listarRespostas(long convidadoId) throws SQLException {
-        return convidadoRepository.listarRespostas(convidadoId);
+    public List<Participante> listarParticipantes(long reuniaoId) throws SQLException {
+        return participanteRepository.listarPorReuniao(reuniaoId);
     }
 
-    public void atualizarNomeConvidado(long convidadoId, String nome) throws SQLException {
-        convidadoRepository.atualizarNome(convidadoId, nome);
+    public void salvarResposta(long participanteId, Map<Long, String> respostas) throws SQLException {
+        participanteRepository.salvarResposta(participanteId, respostas);
     }
 
-    public int contarRespostasConfirmadas(long reuniaoId) throws SQLException {
-        return convidadoRepository.contarRespostasConfirmadas(reuniaoId);
+    public Map<Long, String> listarRespostas(long participanteId) throws SQLException {
+        return participanteRepository.listarRespostas(participanteId);
     }
 
-    public java.util.List<br.edu.agendamento.model.ResumoOpcao> listarResumoRespostas(long reuniaoId)
-            throws SQLException {
-        return convidadoRepository.listarResumoRespostas(reuniaoId);
+    public void atualizarNomeParticipante(long participanteId, String nome) throws SQLException {
+        participanteRepository.atualizarNome(participanteId, nome);
+    }
+
+    public int contarRespondentes(long reuniaoId) throws SQLException {
+        return participanteRepository.contarRespondentes(reuniaoId);
+    }
+
+    public List<ResumoHorario> listarResumo(long reuniaoId) throws SQLException {
+        return participanteRepository.listarResumo(reuniaoId);
     }
 
     private void validar(Reuniao dados, List<String> emails) {
-        if (dados.getNome() == null || dados.getNome().isBlank()) {
-            throw new IllegalArgumentException("Informe o nome da reuniao.");
-        }
+        if (dados.getTitulo() == null || dados.getTitulo().isBlank())
+            throw new IllegalArgumentException("Informe o titulo da reuniao.");
+        if (dados.getNomeProponente() == null || dados.getNomeProponente().isBlank())
+            throw new IllegalArgumentException("Informe o nome do proponente.");
+        if (dados.getEmailProponente() == null || dados.getEmailProponente().isBlank())
+            throw new IllegalArgumentException("Informe o email do proponente.");
         if (dados.getDataInicio() == null || dados.getDataFim() == null
-                || dados.getDataFim().isBefore(dados.getDataInicio())) {
+                || dados.getDataFim().isBefore(dados.getDataInicio()))
             throw new IllegalArgumentException("Informe um periodo de datas valido.");
-        }
-        if (emails == null || emails.isEmpty()) {
-            throw new IllegalArgumentException("Informe ao menos um convidado.");
-        }
-        if ("HORA".equals(dados.getFormato())
+        if (dados.getDataFim().isAfter(dados.getDataInicio().plusDays(9)))
+            throw new IllegalArgumentException(
+                    "O intervalo entre as datas nao pode ultrapassar 10 dias.");
+        if (!List.of("DIA", "PERIODOS", "HORAS").contains(dados.getModoDivisao()))
+            throw new IllegalArgumentException("Modo de divisao invalido.");
+        if ("HORAS".equals(dados.getModoDivisao())
                 && (dados.getHoraInicio() == null || dados.getHoraFim() == null
                 || !dados.getHoraFim().isAfter(dados.getHoraInicio())
-                || dados.getIntervaloMinutos() < 15)) {
-            throw new IllegalArgumentException(
-                    "Para horarios, informe inicio, fim e intervalo valido.");
-        }
+                || dados.getDuracaoMinutos() == null || dados.getDuracaoMinutos() <= 0))
+            throw new IllegalArgumentException("Para horarios, informe inicio, fim e duracao valida.");
     }
 
-    private List<OpcaoAgendamento> gerarOpcoes(Reuniao reuniao) {
-        List<OpcaoAgendamento> opcoes = new ArrayList<>();
+    private List<Horario> gerarHorarios(Reuniao reuniao) {
+        List<Horario> horarios = new ArrayList<>();
         for (LocalDate dia = reuniao.getDataInicio();
              !dia.isAfter(reuniao.getDataFim());
              dia = dia.plusDays(1)) {
-            if ("TURNO".equals(reuniao.getFormato())) {
-                for (String turno : new String[]{"MANHA", "TARDE", "NOITE"}) {
-                    OpcaoAgendamento opcao = new OpcaoAgendamento();
-                    opcao.setReuniaoId(reuniao.getId());
-                    opcao.setDataOpcao(dia);
-                    opcao.setTurno(turno);
-                    opcoes.add(opcao);
+            if ("PERIODOS".equals(reuniao.getModoDivisao())) {
+                for (String periodo : new String[]{"MANHA", "TARDE", "NOITE"}) {
+                    Horario horario = new Horario();
+                    horario.setReuniaoId(reuniao.getId());
+                    horario.setDia(dia);
+                    horario.setPeriodo(periodo);
+                    horarios.add(horario);
+                }
+            } else if ("HORAS".equals(reuniao.getModoDivisao())) {
+                LocalTime inicio = reuniao.getHoraInicio();
+                while (!inicio.plusMinutes(reuniao.getDuracaoMinutos()).isAfter(reuniao.getHoraFim())) {
+                    Horario horario = new Horario();
+                    horario.setReuniaoId(reuniao.getId());
+                    horario.setDia(dia);
+                    horario.setHoraInicio(inicio);
+                    horario.setHoraFim(inicio.plusMinutes(reuniao.getDuracaoMinutos()));
+                    horarios.add(horario);
+                    inicio = inicio.plusMinutes(reuniao.getDuracaoMinutos());
                 }
             } else {
-                LocalTime inicio = reuniao.getHoraInicio();
-                while (inicio.plusMinutes(reuniao.getIntervaloMinutos())
-                        .compareTo(reuniao.getHoraFim()) <= 0) {
-                    OpcaoAgendamento opcao = new OpcaoAgendamento();
-                    opcao.setReuniaoId(reuniao.getId());
-                    opcao.setDataOpcao(dia);
-                    opcao.setHoraInicio(inicio);
-                    opcao.setHoraFim(inicio.plusMinutes(reuniao.getIntervaloMinutos()));
-                    opcoes.add(opcao);
-                    inicio = inicio.plusMinutes(reuniao.getIntervaloMinutos());
-                }
+                Horario horario = new Horario();
+                horario.setReuniaoId(reuniao.getId());
+                horario.setDia(dia);
+                horarios.add(horario);
             }
         }
-        return opcoes;
+        return horarios;
     }
 }

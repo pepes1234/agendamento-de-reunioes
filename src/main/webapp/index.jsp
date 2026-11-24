@@ -1,1 +1,4 @@
-<% response.sendRedirect(request.getContextPath() + "/reunioes"); %>
+<%
+    Object usuarioEmail = session.getAttribute("usuarioEmail");
+    response.sendRedirect(request.getContextPath() + (usuarioEmail == null ? "/login" : "/reunioes"));
+%>

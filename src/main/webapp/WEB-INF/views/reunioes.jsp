@@ -11,28 +11,33 @@
 </head>
 <body>
 <main class="container py-4">
-    <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
+    <div class="d-flex align-items-center justify-content-between gap-3 mb-2">
         <div>
             <p class="text-primary fw-semibold text-uppercase small mb-1">Gerenciamento</p>
             <h1 class="h2 mb-0">Reunioes</h1>
         </div>
-        <a class="btn btn-primary" href="<c:url value='/reunioes/nova'/>">Nova reuniao</a>
+        <div class="d-flex gap-2">
+            <a class="btn btn-primary" href="<c:url value='/reunioes/nova'/>">Nova reuniao</a>
+            <a class="btn btn-outline-secondary" href="<c:url value='/logout'/>">Sair</a>
+        </div>
     </div>
+    <p class="text-secondary mb-4">Conectado como <strong><c:out value="${usuarioEmail}"/></strong></p>
 
+    <h2 class="h4 mt-4">Criadas por mim</h2>
     <c:choose>
-        <c:when test="${empty reunioes}">
-            <div class="alert alert-light border">Nenhuma reuniao cadastrada.</div>
+        <c:when test="${empty reunioesCriadas}">
+            <div class="alert alert-light border">Voce ainda nao criou reunioes.</div>
         </c:when>
         <c:otherwise>
-            <div class="row g-3">
-                <c:forEach var="reuniao" items="${reunioes}">
+            <div class="row g-3 mb-4">
+                <c:forEach var="reuniao" items="${reunioesCriadas}">
                     <div class="col-md-6 col-lg-4">
                         <article class="card h-100 shadow-sm">
                             <div class="card-body d-flex flex-column">
-                                <h2 class="h5 card-title"><c:out value="${reuniao.nome}"/></h2>
+                                <h2 class="h5 card-title"><c:out value="${reuniao.titulo}"/></h2>
                                 <p class="card-text mb-1"><strong>Periodo:</strong> <c:out value="${reuniao.periodoFormatado}"/></p>
                                 <p class="card-text mb-4"><strong>Formato:</strong>
-                                    <c:out value="${reuniao.formato == 'HORA' ? 'Por hora' : 'Por turno'}"/>
+                                    <c:out value="${reuniao.modoDivisao == 'HORAS' ? 'Por horas' : (reuniao.modoDivisao == 'PERIODOS' ? 'Por periodos' : 'Por dia')}"/>
                                 </p>
                                 <div class="mt-auto d-flex gap-2">
                                     <a class="btn btn-outline-primary"
@@ -61,7 +66,7 @@
                                     </div>
                                     <div class="modal-body">
                                         Excluir a reuniao
-                                        "<strong><c:out value="${reuniao.nome}"/></strong>"
+                                        "<strong><c:out value="${reuniao.titulo}"/></strong>"
                                         e todos os dados associados?
                                     </div>
                                     <div class="modal-footer">
@@ -75,6 +80,36 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </c:forEach>
+            </div>
+        </c:otherwise>
+    </c:choose>
+
+    <h2 class="h4 mt-4">Em que participo</h2>
+    <c:choose>
+        <c:when test="${empty reunioesParticipadas}">
+            <div class="alert alert-light border">Voce nao consta como participante de nenhuma reuniao.</div>
+        </c:when>
+        <c:otherwise>
+            <div class="row g-3">
+                <c:forEach var="reuniao" items="${reunioesParticipadas}">
+                    <div class="col-md-6 col-lg-4">
+                        <article class="card h-100 shadow-sm">
+                            <div class="card-body d-flex flex-column">
+                                <h3 class="h5 card-title"><c:out value="${reuniao.titulo}"/></h3>
+                                <p class="card-text mb-1"><strong>Periodo:</strong> <c:out value="${reuniao.periodoFormatado}"/></p>
+                                <p class="card-text mb-4"><strong>Criada por:</strong>
+                                    <c:out value="${reuniao.nomeProponente}"/>
+                                </p>
+                                <div class="mt-auto">
+                                    <a class="btn btn-outline-primary"
+                                       href="<c:url value='/reunioes/detalhes'><c:param name='id' value='${reuniao.id}'/></c:url>">
+                                        Ver reuniao
+                                    </a>
+                                </div>
+                            </div>
+                        </article>
                     </div>
                 </c:forEach>
             </div>
